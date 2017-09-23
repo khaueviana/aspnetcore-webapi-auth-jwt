@@ -5,6 +5,12 @@ using Microsoft.AspNetCore.Identity;
 using Auth.EF;
 using Auth.Web.Model;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using System;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.IO;
+using Microsoft.Extensions.Configuration;
 
 namespace Auth.Web.Controllers
 {
@@ -20,8 +26,8 @@ namespace Auth.Web.Controllers
             _userManager = userManager;
             _signInManager = signInManager;
         }
-        
-        [HttpPost("create")]      
+
+        [HttpPost("Create")]
         public async Task<IActionResult> Create([FromBody] AccountRegisterLoginModel model)
         {
             if (!ModelState.IsValid)
@@ -30,7 +36,7 @@ namespace Auth.Web.Controllers
             }
 
             var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-                        
+
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (!result.Succeeded)
@@ -47,22 +53,46 @@ namespace Auth.Web.Controllers
             return Ok();
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] AccountRegisterLoginModel model)
+        [HttpPost("GenerateToken")]
+        public async Task<IActionResult> GenerateToken([FromBody] AccountRegisterLoginModel model)
         {
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                return BadRequest();
+                var config = new ConfigurationBuilder()
+                                 .SetBasePath(Directory.GetCurrentDirectory())
+                                 .AddJsonFile("appsettings.json")
+                                 .Build();
+
+                var user = await _userManager.FindByEmailAsync(model.Email);
+
+                if (user != null)
+                {
+                    var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+                    if (result.Succeeded)
+                    {
+                        var userClaims = await _userManager.GetClaimsAsync(user);
+
+                        var claims = new[]
+                        {
+                            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        };
+
+                        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Token:Secret"]));
+                        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                        var token = new JwtSecurityToken(config["Token:Iss"],
+                          config["Token:Aud"],
+                          claims.Union(userClaims),
+                          expires: DateTime.Now.AddMinutes(30),
+                          signingCredentials: creds);
+
+                        return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+                    }
+                }
             }
 
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent: false, lockoutOnFailure: false);
-
-            if (!result.Succeeded)
-            {
-                return BadRequest();
-            }
-
-            return Ok();
+            return BadRequest("Could not create token");
         }
-    }  
+    }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Auth.Web.Model;
 using System.Linq;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace Auth.Web.Controllers
 {
@@ -15,14 +16,14 @@ namespace Auth.Web.Controllers
           new ChicoFeelingsModel { NomeMusica = "Sinhá", TrechoLetra = "Por que talhar meu corpo eu não olhei Sinhá para que que vosmincê meus olhos vai furar"}
         };
 
-        [HttpGet("get")]
+        [HttpGet]
         [Authorize(Policy = "CanChicoFeelingsRead")]
         public List<ChicoFeelingsModel> Get()
         {
             return _data;
         }
 
-        [HttpPost("create")]
+        [HttpPost("Create")]
         [Authorize(Policy = "CanChicoFeelingsCreate")]
         public IActionResult Create([FromBody]ChicoFeelingsModel chicoFeelingsModel)
         {
@@ -36,7 +37,7 @@ namespace Auth.Web.Controllers
             return Ok();
         }
 
-        [HttpPost("sudocreate")]
+        [HttpPost("SudoCreate")]
         [Authorize(Policy = "CanChicoFeelingsSudoCreate")]
         public IActionResult SudoCreate([FromBody]ChicoFeelingsModel chicoFeelingsModel)
         {

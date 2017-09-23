@@ -6,8 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System;
 
 namespace Auth.Web
 {
@@ -26,22 +28,41 @@ namespace Auth.Web
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
-            services.ConfigureApplicationCookie(cfg =>
-            {
-                cfg.Events = new CookieAuthenticationEvents
-                {
-                    OnRedirectToLogin = ctx =>
-                    {
-                        if (ctx.Request.Path.StartsWithSegments("/api") && ctx.Response.StatusCode == 200)
-                        {
-                            ctx.Response.StatusCode = 401;
-                            return Task.FromResult<object>(null);
-                        }
+            var tokenConfig = config.GetSection("Token");
+            var symmetricKeyAsBase64 = tokenConfig["Secret"];
+            var keyByteArray = Encoding.ASCII.GetBytes(symmetricKeyAsBase64);
+            var signingKey = new SymmetricSecurityKey(keyByteArray);
 
-                        ctx.Response.Redirect(ctx.RedirectUri);
-                        return Task.FromResult<object>(null);
-                    }
-                };
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                // The signing key must match!  
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = signingKey,
+
+                // Validate the JWT Issuer (iss) claim  
+                ValidateIssuer = true,
+                ValidIssuer = tokenConfig["Iss"],
+
+                // Validate the JWT Audience (aud) claim  
+                ValidateAudience = true,
+                ValidAudience = tokenConfig["Aud"],
+
+                // Validate the token expiry  
+                ValidateLifetime = true,
+
+                ClockSkew = TimeSpan.Zero
+            };
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(cfg =>
+            {
+                cfg.RequireHttpsMetadata = false;
+                cfg.SaveToken = true;
+                cfg.TokenValidationParameters = tokenValidationParameters;
             });
 
             services.AddAuthorization(options =>
