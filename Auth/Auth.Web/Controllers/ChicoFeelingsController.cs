@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Auth.Web.Model;
 using System.Linq;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace Auth.Web.Controllers
 {
