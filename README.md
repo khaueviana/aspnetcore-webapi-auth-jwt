@@ -5,13 +5,12 @@
 * Web API in ASP.NET Core 2.0
 * Entity Framework 2.0
 * ASP.NET Identity
-* Claim-Based Authorization
+* Claim and Role Based Authorization
 * JWT Based Authentication
 
 ## Run
 
 * Get packages with Nuget
-* Add-Migration InitialCreate
 * Update-Database
 * Create a User using api/account/create
 * Login a User using api/account/generatetoken
@@ -39,3 +38,8 @@ https://github.com/aspnet/Home/issues/2007
 
 https://blogs.msdn.microsoft.com/webdev/2017/04/06/jwt-validation-and-authorization-in-asp-net-core/
 
+https://blogs.msdn.microsoft.com/webdev/2016/10/27/bearer-token-authentication-in-asp-net-core/
+
+http://www.jerriepelser.com/blog/using-roles-with-the-jwt-middleware/
+
+https://docs.microsoft.com/en-us/aspnet/core/security/authorization/roles

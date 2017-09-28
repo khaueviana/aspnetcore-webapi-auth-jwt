@@ -10,13 +10,14 @@ namespace Auth.Web.Controllers
     public class ChicoFeelingsController : Controller
     {
         private static List<ChicoFeelingsModel> _data = new List<ChicoFeelingsModel>
-        { new ChicoFeelingsModel { NomeMusica = "Bastidores", TrechoLetra = "Chorei, chorei, até ficar com dó de mim"},
-          new ChicoFeelingsModel { NomeMusica = "Bastidores", TrechoLetra = "Quando você me quiser rever, já vai me encontrar refeita, pode crer"},
-          new ChicoFeelingsModel { NomeMusica = "Sinhá", TrechoLetra = "Por que talhar meu corpo eu não olhei Sinhá para que que vosmincê meus olhos vai furar"}
+        {
+            new ChicoFeelingsModel { NomeMusica = "Bastidores", TrechoLetra = "Chorei, chorei, até ficar com dó de mim"},
+            new ChicoFeelingsModel { NomeMusica = "Bastidores", TrechoLetra = "Quando você me quiser rever, já vai me encontrar refeita, pode crer"},   
+            new ChicoFeelingsModel { NomeMusica = "Sinhá", TrechoLetra = "Por que talhar meu corpo eu não olhei Sinhá para que que vosmincê meus olhos vai furar"}
         };
 
         [HttpGet]
-        [Authorize(Policy = "CanChicoFeelingsRead")]
+        [Authorize(Roles = "Admin")]
         public List<ChicoFeelingsModel> Get()
         {
             return _data;
@@ -27,9 +28,7 @@ namespace Auth.Web.Controllers
         public IActionResult Create([FromBody]ChicoFeelingsModel chicoFeelingsModel)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(modelError => modelError.ErrorMessage).ToList());
-            }
 
             _data.Add(chicoFeelingsModel);
 
@@ -41,9 +40,7 @@ namespace Auth.Web.Controllers
         public IActionResult SudoCreate([FromBody]ChicoFeelingsModel chicoFeelingsModel)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(modelError => modelError.ErrorMessage).ToList());
-            }
 
             chicoFeelingsModel.NomeMusica += " SUDO!";
 
